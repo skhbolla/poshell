@@ -205,17 +205,25 @@ int handle_builtins(char **tokens, int token_count) {
 int setup_redirection(int *token_count, char **tokens, int saved_fds[3]) {
     // Loop through the tokens and look for redirection symbols
     for (int i = 0; i < *token_count; i++) {
-        if (strcmp(tokens[i], ">") == 0 || strcmp(tokens[i] , "1>") == 0) {
+        if (strcmp(tokens[i], ">") == 0 || 
+                strcmp(tokens[i] , "1>") == 0 ||
+                strcmp(tokens[i], ">>") == 0 ||
+                strcmp(tokens[i], "1>>") == 0) {
             char *filename = tokens[i+1];
             if (filename == NULL) {
                 fprintf(stderr, "Unexpected token newline\n");
                 return -2;
             } else {
                 // take a backup of original fd to restore later
-                saved_fds[1] = dup(STDIN_FILENO);
-
+                saved_fds[1] = dup(STDOUT_FILENO);
+                int new_fd = -1;
                 // Open the file
-                int new_fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if (strcmp(tokens[i], ">>") == 0 || strcmp(tokens[i], "1>>") == 0) {
+                    new_fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
+                }
+                else {
+                    new_fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                }
                 if(new_fd < 0) {
                     perror("open");
                     return -2;
@@ -232,7 +240,8 @@ int setup_redirection(int *token_count, char **tokens, int saved_fds[3]) {
                 break;
             }
         }
-        else if (strcmp(tokens[i] , "2>") == 0) {
+        else if (strcmp(tokens[i] , "2>") == 0 ||
+                strcmp(tokens[i], "2>>") == 0) {
             char *filename = tokens[i+1];
             if (filename == NULL) {
                 fprintf(stderr, "Unexpected token newline\n");
@@ -240,9 +249,15 @@ int setup_redirection(int *token_count, char **tokens, int saved_fds[3]) {
             } else {
                 // take a backup of original fd to restore later
                 saved_fds[2] = dup(STDERR_FILENO);
+                int new_fd = -1;
 
                 // Open the file
-                int new_fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if (strcmp(tokens[i], "2>>") == 0) {
+                    new_fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
+                }
+                else {
+                    new_fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                }
                 if(new_fd < 0) {
                     perror("open");
                     return -2;
@@ -335,7 +350,7 @@ int main(int argc, char *argv[]) {
     // -----------------------------------------------------------
     // Handle redirection
     // -----------------------------------------------------------
-    int saved_fds[3]; // Standard 0=in 1=out 2=err
+    int saved_fds[3] = {-1, -1, -1}; // Standard 0=in 1=out 2=err
     if (setup_redirection(&token_count, tokens, saved_fds) == -2) {
         fprintf(stderr, "Error setting up redirection");
         continue;
