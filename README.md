@@ -1,4 +1,7 @@
+<img src="./assets/logo/trash_logo_transparent.png" alt="TRaSH" width="600"/>
+
 # TRaSH (The TRacing SHell)
+
 > The shell that explains itself
 
 ## What is it ?
@@ -59,6 +62,19 @@ I’m building this incrementally, moving from a simple REPL to an educational t
 - [ ] Command auto-completion
 
 - [ ] Filename auto-completion
+
+## How to Build
+
+```bash
+# Clone the repo
+git clone https://github.com/your-username/trash.git
+
+# Build using the provided Makefile
+make
+
+# Run the shell
+./trash
+```
 
 ## References I used
 
